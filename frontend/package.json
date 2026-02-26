@@ -1,0 +1,33 @@
+{
+    "name": "opbet-frontend",
+    "version": "1.0.0",
+    "description": "OPBET — Bitcoin Prediction Markets",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc --noEmit && vite build",
+        "preview": "vite preview",
+        "lint": "eslint . --fix",
+        "format": "prettier --write ."
+    },
+    "dependencies": {
+        "opnet": "rc",
+        "@btc-vision/bitcoin": "rc",
+        "@btc-vision/transaction": "rc",
+        "@btc-vision/walletconnect": "latest",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-router-dom": "^7.0.0"
+    },
+    "devDependencies": {
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
+        "@vitejs/plugin-react": "^4.3.4",
+        "vite": "^6.0.0",
+        "typescript": "^5.9.3",
+        "eslint": "^10.0.0",
+        "@eslint/js": "^10.0.0",
+        "typescript-eslint": "^8.56.0",
+        "prettier": "^3.7.4"
+    }
+}

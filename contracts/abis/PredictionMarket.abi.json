@@ -1,0 +1,386 @@
+{
+    "functions": [
+        {
+            "name": "createMarket",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "description",
+                    "type": "STRING"
+                },
+                {
+                    "name": "category",
+                    "type": "UINT8"
+                },
+                {
+                    "name": "endTime",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "poolAddrHash",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "initialYesBps",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "buyShares",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "isYes",
+                    "type": "BOOL"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "sharesReceived",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "sellShares",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "isYes",
+                    "type": "BOOL"
+                },
+                {
+                    "name": "sharesIn",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "btcOut",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "resolveMarket",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "outcome",
+                    "type": "UINT8"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "success",
+                    "type": "BOOL"
+                }
+            ]
+        },
+        {
+            "name": "claimWinnings",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "btcOwed",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "getMarketInfo",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "yesBtcPool",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "noBtcPool",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "yesSharesInPool",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "noSharesInPool",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "outcome",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "endTime",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "category",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "totalVolume",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "yesPrice",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "noPrice",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "getUserPosition",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "user",
+                    "type": "ADDRESS"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "yesShares",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "noShares",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "pendingClaim",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "hasClaimed",
+                    "type": "BOOL"
+                }
+            ]
+        },
+        {
+            "name": "getMarketCount",
+            "type": "Function",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "marketCount",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "getProtocolFees",
+            "type": "Function",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "totalFees",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "quoteShares",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "isYes",
+                    "type": "BOOL"
+                },
+                {
+                    "name": "btcIn",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "sharesOut",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "newPrice",
+                    "type": "UINT256"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "name": "MarketCreated",
+            "values": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "endTime",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "category",
+                    "type": "UINT8"
+                },
+                {
+                    "name": "poolAddrHash",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "MarketDescription",
+            "values": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "description",
+                    "type": "STRING"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "SharesBought",
+            "values": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "buyer",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "isYes",
+                    "type": "BOOL"
+                },
+                {
+                    "name": "sharesOut",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "btcIn",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "ProtocolFeeCollected",
+            "values": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "fee",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "SharesSold",
+            "values": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "seller",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "isYes",
+                    "type": "BOOL"
+                },
+                {
+                    "name": "sharesIn",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "btcOut",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "MarketResolved",
+            "values": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "outcome",
+                    "type": "UINT8"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "WinningsClaimed",
+            "values": [
+                {
+                    "name": "marketId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "claimant",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        }
+    ]
+}
