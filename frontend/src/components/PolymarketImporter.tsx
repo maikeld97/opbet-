@@ -1,4 +1,30 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+
+interface LiveSet {
+    descriptions: Set<string>;
+    slugs: Set<string>;
+}
+
+function buildLiveSet(): LiveSet {
+    const descriptions = new Set<string>();
+    const slugs = new Set<string>();
+    for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('opbet_desc_')) {
+            const val = localStorage.getItem(key);
+            if (val) descriptions.add(val.toLowerCase().trim());
+        }
+        if (key.startsWith('opbet_event_')) {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                try {
+                    const ev = JSON.parse(raw) as { eventSlug?: string };
+                    if (ev.eventSlug) slugs.add(ev.eventSlug);
+                } catch { /* ignore */ }
+            }
+        }
+    }
+    return { descriptions, slugs };
+}
 
 // A flattened binary market ready to display
 interface PolyMarket {
@@ -9,6 +35,9 @@ interface PolyMarket {
     readonly slug: string;
     readonly yesPrice: number | null;
     readonly noPrice: number | null;
+    readonly eventTitle: string;
+    readonly eventSlug: string;
+    readonly outcomeLabel: string | null; // e.g. "Gavin Newsom"
 }
 
 export interface ImportedMarket {
@@ -17,6 +46,9 @@ export interface ImportedMarket {
     readonly endDatetime: string;
     readonly polyYesPrice: number | null;
     readonly polyNoPrice: number | null;
+    readonly eventTitle?: string;
+    readonly eventSlug?: string;
+    readonly outcomeLabel?: string;
 }
 
 interface PolymarketImporterProps {
@@ -76,6 +108,9 @@ function toImported(m: PolyMarket): ImportedMarket {
         endDatetime: resolvedEnd,
         polyYesPrice: m.yesPrice,
         polyNoPrice: m.noPrice,
+        ...(m.eventTitle ? { eventTitle: m.eventTitle } : {}),
+        ...(m.eventSlug ? { eventSlug: m.eventSlug } : {}),
+        ...(m.outcomeLabel ? { outcomeLabel: m.outcomeLabel } : {}),
     };
 }
 
@@ -104,6 +139,7 @@ export function PolymarketImporter({ onImport, onBulkQueue }: PolymarketImporter
     const [error, setError] = useState<string | null>(null);
     const [imported, setImported] = useState<Set<string>>(new Set());
     const [selected, setSelected] = useState<Set<string>>(new Set());
+    const liveSetRef = useRef<LiveSet>({ descriptions: new Set(), slugs: new Set() });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fetchViaProxy = useCallback(async (apiUrl: string): Promise<any[]> => {
@@ -169,6 +205,9 @@ export function PolymarketImporter({ onImport, onBulkQueue }: PolymarketImporter
                             slug: (m.slug ?? m.conditionId ?? String(m.question)) as string,
                             yesPrice,
                             noPrice,
+                            eventTitle: event.title as string,
+                            eventSlug: event.slug as string,
+                            outcomeLabel: (m.groupItemTitle ?? null) as string | null,
                         });
                     }
                 }
@@ -194,6 +233,7 @@ export function PolymarketImporter({ onImport, onBulkQueue }: PolymarketImporter
     }, [fetchViaProxy]);
 
     const handleOpen = (): void => {
+        liveSetRef.current = buildLiveSet();
         setOpen(true);
         if (markets.length === 0) void fetchMarkets();
     };
@@ -213,10 +253,16 @@ export function PolymarketImporter({ onImport, onBulkQueue }: PolymarketImporter
     };
 
     const selectAll = (): void => {
-        const nonExpired = markets
-            .filter((m) => new Date(m.endDate) > new Date())
+        const { descriptions, slugs } = liveSetRef.current;
+        const selectable = markets
+            .filter((m) => {
+                if (new Date(m.endDate) <= new Date()) return false;
+                if (descriptions.has(m.question.toLowerCase().trim())) return false;
+                if (slugs.has(m.eventSlug)) return false;
+                return true;
+            })
             .map((m) => m.slug);
-        setSelected(new Set(nonExpired));
+        setSelected(new Set(selectable));
     };
 
     const clearSelection = (): void => setSelected(new Set());
@@ -297,24 +343,35 @@ export function PolymarketImporter({ onImport, onBulkQueue }: PolymarketImporter
                         const endDate = new Date(m.endDate);
                         const isExpired = endDate <= new Date();
                         const hasPrices = m.yesPrice !== null && m.noPrice !== null;
+                        const { descriptions, slugs } = liveSetRef.current;
+                        const isAlreadyLive =
+                            descriptions.has(m.question.toLowerCase().trim()) ||
+                            slugs.has(m.eventSlug);
                         return (
                             <div
                                 key={m.slug}
-                                className={`poly-item ${isImported ? 'poly-item--imported' : ''} ${isSelected ? 'poly-item--selected' : ''}`}
+                                className={`poly-item ${isImported ? 'poly-item--imported' : ''} ${isSelected ? 'poly-item--selected' : ''} ${isAlreadyLive ? 'poly-item--live' : ''}`}
                             >
                                 {onBulkQueue && (
                                     <input
                                         type="checkbox"
                                         className="poly-checkbox"
                                         checked={isSelected}
-                                        disabled={isExpired}
+                                        disabled={isExpired || isAlreadyLive}
                                         onChange={() => { toggleSelect(m.slug); }}
                                     />
                                 )}
                                 <div className="poly-item__main">
-                                    <span className="poly-item__cat" style={{ color: CAT_COLORS[cat] }}>
-                                        {CAT_LABELS[cat]}
-                                    </span>
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        <span className="poly-item__cat" style={{ color: CAT_COLORS[cat] }}>
+                                            {CAT_LABELS[cat]}
+                                        </span>
+                                        {isAlreadyLive && (
+                                            <span style={{ fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 700, letterSpacing: '0.05em' }}>
+                                                ✓ LIVE
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="poly-item__question">{m.question}</p>
                                     <div className="poly-item__meta">
                                         <span className="poly-item__vol">{fmtVol(m.eventVolume)}</span>
@@ -327,12 +384,12 @@ export function PolymarketImporter({ onImport, onBulkQueue }: PolymarketImporter
                                     )}
                                 </div>
                                 <button
-                                    className={`btn btn-sm ${isImported ? 'btn-ghost' : 'btn-primary'}`}
-                                    onClick={() => { handleSingleImport(m); }}
-                                    disabled={isExpired}
-                                    title={isExpired ? 'End date is in the past' : 'Copy to Create Market form'}
+                                    className={`btn btn-sm ${isImported || isAlreadyLive ? 'btn-ghost' : 'btn-primary'}`}
+                                    onClick={() => { if (!isAlreadyLive) handleSingleImport(m); }}
+                                    disabled={isExpired || isAlreadyLive}
+                                    title={isAlreadyLive ? 'Already live on OPBET' : isExpired ? 'End date is in the past' : 'Copy to Create Market form'}
                                 >
-                                    {isImported ? '✓' : 'Copy'}
+                                    {isAlreadyLive ? '✓ Live' : isImported ? '✓' : 'Copy'}
                                 </button>
                             </div>
                         );

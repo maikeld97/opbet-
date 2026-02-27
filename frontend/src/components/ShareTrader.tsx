@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { MarketInfo, QuoteResult } from '../types/market.js';
-import { priceToPercent, priceToCents } from '../types/market.js';
+import { priceToPercent, priceToCents, satsToDisplay } from '../types/market.js';
 import { useMarket } from '../hooks/useMarket.js';
 import { useWallet } from '../hooks/useWallet.js';
 import { formatShares } from '../utils/format.js';
@@ -197,6 +197,20 @@ export function ShareTrader({
                         ? ((Number(sats) / Number(quote.sharesOut)) * 100).toFixed(2) + '¢'
                         : null;
 
+                // Potential payout approximation: btcIn / currentPrice
+                // currentPrice is scaled × 1_000_000 (e.g. 650_000 = 65%)
+                const currentPrice = outcome === 'yes' ? market.yesPrice : market.noPrice;
+                let potentialPayout: bigint | null = null;
+                let potentialProfit: bigint | null = null;
+                let profitPct: string | null = null;
+                if (sats !== null && sats > 0n && currentPrice > 0n) {
+                    // potentialPayout = sats * 1_000_000 / currentPrice
+                    potentialPayout = (sats * 1_000_000n) / currentPrice;
+                    potentialProfit = potentialPayout - sats;
+                    const pct = (Number(potentialProfit) / Number(sats)) * 100;
+                    profitPct = pct.toFixed(1);
+                }
+
                 return (
                     <div className="quote-preview">
                         <div className="quote-row">
@@ -213,6 +227,23 @@ export function ShareTrader({
                             <span>New market price</span>
                             <span>{priceToPercent(quote.newPrice)}</span>
                         </div>
+                        {potentialPayout !== null && potentialProfit !== null && (
+                            <>
+                                <div className="quote-row quote-row--divider" />
+                                <div className="quote-row">
+                                    <span>Potential payout if wins</span>
+                                    <span className={outcome === 'yes' ? 'yes-value' : 'no-value'}>
+                                        ~{satsToDisplay(potentialPayout)}
+                                    </span>
+                                </div>
+                                <div className="quote-row">
+                                    <span>Potential profit</span>
+                                    <span className={outcome === 'yes' ? 'yes-value' : 'no-value'}>
+                                        +{satsToDisplay(potentialProfit)} (+{profitPct}%)
+                                    </span>
+                                </div>
+                            </>
+                        )}
                     </div>
                 );
             })()}

@@ -46,6 +46,9 @@ export interface UseMarketReturn {
         poolAddress: string,
         poolAddrHash: bigint,
         initialYesBps: bigint,
+        eventTitle?: string,
+        eventSlug?: string,
+        outcomeLabel?: string,
     ) => Promise<string | null>;
     readonly buyShares: (
         marketId: bigint,
@@ -123,19 +126,24 @@ export function useMarket(): UseMarketReturn {
                 if (result.revert || !result.properties) return null;
 
                 const r = result.properties as Record<string, unknown>;
+                const eventGroupRaw = localStorage.getItem(`opbet_event_${marketId.toString()}`);
+                const eventGroup = eventGroupRaw ? JSON.parse(eventGroupRaw) as { eventTitle: string | null; eventSlug: string; outcomeLabel: string | null } : null;
+                const catOverride = localStorage.getItem(`opbet_cat_${marketId.toString()}`);
                 return {
                     marketId,
                     description: localStorage.getItem(`opbet_desc_${marketId.toString()}`) ?? '',
-                    yesBtcPool: r['yesBtcPool'] as bigint,
-                    noBtcPool: r['noBtcPool'] as bigint,
                     yesSharesInPool: r['yesSharesInPool'] as bigint,
                     noSharesInPool: r['noSharesInPool'] as bigint,
                     outcome: Number(r['outcome']) as 0 | 1 | 2,
                     endTime: r['endTime'] as bigint,
-                    category: Number(r['category']) as 0 | 1 | 2 | 3,
+                    category: (catOverride !== null ? Number(catOverride) : Number(r['category'])) as 0 | 1 | 2 | 3,
                     totalVolume: r['totalVolume'] as bigint,
                     yesPrice: r['yesPrice'] as bigint,
                     noPrice: r['noPrice'] as bigint,
+                    totalBtc: r['totalBtc'] as bigint,
+                    ...(eventGroup?.eventTitle ? { eventTitle: eventGroup.eventTitle } : {}),
+                    ...(eventGroup?.eventSlug ? { eventSlug: eventGroup.eventSlug } : {}),
+                    ...(eventGroup?.outcomeLabel ? { outcomeLabel: eventGroup.outcomeLabel } : {}),
                 };
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to fetch market info');
@@ -214,6 +222,9 @@ export function useMarket(): UseMarketReturn {
             poolAddress: string,
             poolAddrHash: bigint,
             initialYesBps: bigint,
+            eventTitle?: string,
+            eventSlug?: string,
+            outcomeLabel?: string,
         ): Promise<string | null> => {
             if (!isConnected) {
                 setError('Wallet not connected');
@@ -261,6 +272,13 @@ export function useMarket(): UseMarketReturn {
                 // Store pool address + description locally (not in contract storage)
                 localStorage.setItem(`opbet_pool_${prevCount.toString()}`, poolAddress);
                 localStorage.setItem(`opbet_desc_${prevCount.toString()}`, description);
+                if (eventSlug) {
+                    localStorage.setItem(`opbet_event_${prevCount.toString()}`, JSON.stringify({
+                        eventTitle: eventTitle ?? null,
+                        eventSlug,
+                        outcomeLabel: outcomeLabel ?? null,
+                    }));
+                }
 
                 return receipt.transactionId as string;
             } catch (err) {

@@ -5,6 +5,8 @@ import { Home } from './pages/Home.js';
 import { MarketDetail } from './pages/MarketDetail.js';
 import { Portfolio } from './pages/Portfolio.js';
 import { Deploy } from './pages/Deploy.js';
+import { AdminSeed } from './pages/AdminSeed.js';
+import { EventGroupDetail } from './pages/EventGroupDetail.js';
 import './styles.css';
 
 export function App(): React.ReactElement {
@@ -17,6 +19,8 @@ export function App(): React.ReactElement {
                     <Route path="/market/:id" element={<MarketDetail />} />
                     <Route path="/portfolio" element={<Portfolio />} />
                     <Route path="/deploy" element={<Deploy />} />
+                    <Route path="/admin/seed" element={<AdminSeed />} />
+                    <Route path="/event/:slug" element={<EventGroupDetail />} />
                 </Routes>
             </BrowserRouter>
         </WalletConnectProvider>
